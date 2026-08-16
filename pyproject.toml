@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snapshot-diff"
+version = "1.0.0"
+description = "Diff two versions of a dataset that share no primary key, separating corrected fields from records that genuinely appeared or vanished."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mark Pease" }]
+keywords = ["diff", "data-quality", "reconciliation", "dataset", "csv", "excel"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Utilities",
+]
+# The core has no dependencies at all. Excel support is the only optional extra.
+dependencies = []
+
+[project.optional-dependencies]
+excel = ["openpyxl>=3.1"]
+
+[project.scripts]
+snapshot-diff = "snapshot_diff.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Ark2027/snapshot-diff"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

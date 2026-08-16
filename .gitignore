@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Never commit real data. Fixtures live in fixtures/ and are synthetic.
+data/
+*.sqlite
+*.sqlite3
+~$*.xlsx
+
+# OS / editor / tooling
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+.claude/

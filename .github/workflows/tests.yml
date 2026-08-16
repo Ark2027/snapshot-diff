@@ -1,0 +1,48 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Only reads the repository and runs tests. The default token has write access,
+# which nothing here needs.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # No extras. The core is dependency-free and the tests should prove it,
+      # so an accidental import of openpyxl in the wrong place fails here.
+      - name: Install
+        run: pip install -e .
+
+      - name: Tests
+        run: |
+          python tests/test_core.py
+          python tests/test_cli.py
+
+      - name: The README example still produces the documented numbers
+        run: |
+          snapshot-diff fixtures/before.csv fixtures/after.csv \
+            -f "Business Name" -f "Date:date" -f "Amount:number"
+
+      - name: Excel support works when the extra is installed
+        run: |
+          pip install -e ".[excel]"
+          python -c "from snapshot_diff.io import load; print('excel loader importable')"
