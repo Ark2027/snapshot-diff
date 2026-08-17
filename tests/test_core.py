@@ -163,6 +163,48 @@ class ReportingTests(unittest.TestCase):
         s = compare(before, after, FIELDS).summary()
         self.assertEqual(s["unchanged"] + s["corrected"] + s["added"] + s["removed"], 4)
 
+class ScaleTests(unittest.TestCase):
+    """The pairing pass used to compare every leftover against every other one.
+
+    That is quadratic, and on a run where nothing matched it took about 1.5
+    seconds for 1,600 rows a side. These pin the behaviour that replaced it.
+    """
+
+    FIELDS = (KeyField("name"), KeyField("date", "date"), KeyField("amount", "number"))
+
+    def _rows(self, n, prefix="biz", start=0):
+        return [{"name": f"{prefix} {i}", "date": "2024-01-05", "amount": 1000 + i}
+                for i in range(start, start + n)]
+
+    def test_worst_case_completes_quickly(self) -> None:
+        # Zero overlap, so every row on both sides is a leftover to be paired.
+        # Quadratic behaviour would take seconds here.
+        import time
+
+        before = self._rows(2000, "alpha")
+        after = self._rows(2000, "bravo", start=100_000)
+        started = time.perf_counter()
+        result = compare(before, after, self.FIELDS)
+        elapsed = time.perf_counter() - started
+
+        self.assertEqual(result.added_count, 2000)
+        self.assertEqual(result.removed_count, 2000)
+        self.assertLess(elapsed, 2.0, "pairing should not be quadratic in the number of rows")
+
+    def test_large_input_still_separates_corrections(self) -> None:
+        before = self._rows(1000)
+        after = self._rows(1000)
+        for i in range(0, 1000, 10):          # 100 date corrections
+            after[i]["date"] = "2024-06-30"
+        after.append({"name": "genuinely new", "date": "2024-07-01", "amount": 5})
+
+        result = compare(before, after, self.FIELDS)
+        self.assertEqual(result.unchanged, 900)
+        self.assertEqual(result.corrected, 100)
+        self.assertEqual(result.corrections_by_field(), {"date": 100})
+        self.assertEqual(result.added_count, 1)
+        self.assertEqual(result.removed_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

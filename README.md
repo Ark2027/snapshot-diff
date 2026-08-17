@@ -93,7 +93,11 @@ snapshot-diff q1.xlsx q2.xlsx --sheet Originations -f "Name" -f "Date:date" -f "
 
 ## What I'd change
 
-The pairing is greedy. When several leftover rows could pair with each other it takes the first match rather than searching for a globally optimal assignment. For the sizes I built this for the difference is immaterial, and a greedy pass is much easier to reason about than a matching algorithm — but on a dataset with many near-identical rows it could pair the wrong two. Sorting keeps the result stable across runs, which I cared about more.
+The pairing is greedy. When several leftover rows could pair with each other it takes the first match rather than searching for a globally optimal assignment. For the sizes I built this for the difference is immaterial, and a greedy pass is much easier to reason about than a matching algorithm, but on a dataset with many near-identical rows it could pair the wrong two. Sorting keeps the result stable across runs, which I cared about more.
+
+Finding those pairs used to mean comparing every leftover against every other leftover. That is quadratic, and I only noticed how badly when I timed it: with no overlap at all, 1,600 rows a side took about 1.5 seconds and every doubling roughly quadrupled it.
+
+It is an index lookup, not a search. Two keys that differ in exactly one position are identical once you remove that position, so each candidate goes into one bucket per field with that field blanked out. Same answers, and the same 1,600-row case now takes 34ms. 5,000 a side runs in about 126ms.
 
 It also only recognises a change in *one* field as a correction. Two fields changing is treated as a different record, which is the safe call but will miss a record where someone fixed a typo and a date in the same pass.
 

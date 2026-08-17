@@ -141,6 +141,11 @@ def _differs_in_one_field(a: Row, b: Row) -> int | None:
     return differing[0] if len(differing) == 1 else None
 
 
+def _mask(key: Row, index: int) -> Row:
+    """The key with one position removed, used to bucket near-matches."""
+    return key[:index] + key[index + 1:]
+
+
 def compare(
     before: Iterable[dict[str, Any]],
     after: Iterable[dict[str, Any]],
@@ -162,20 +167,33 @@ def compare(
     # Pair up what is left. A pair differing in exactly one field is the same
     # record with that field corrected.
     #
-    # This is greedy: when several leftovers could pair with each other it takes
-    # the first match rather than searching for a globally optimal assignment.
-    # For the sizes this is built for the difference is immaterial, and a greedy
-    # pass is far easier to reason about than a matching algorithm. Sorting keeps
-    # the result stable across runs, which matters more than optimality here.
+    # The obvious way to do this is to compare every leftover against every other
+    # leftover, which is quadratic and gets unpleasant fast: on a run where
+    # nothing matched at all, 1,600 rows a side took about 1.5 seconds and each
+    # doubling roughly quadrupled it. That is a search where an index will do.
+    #
+    # So instead, for each candidate, record it under one masked key per field
+    # position, with that position blanked out. Two keys differing in exactly
+    # one position share a masked key at that position, and identical pairs were
+    # already removed above, so a bucket hit is exactly the relationship wanted.
+    # That makes the pass linear in rows times fields.
+    buckets: dict[tuple[int, Row], list[Row]] = {}
+    for new_key in sorted(new):
+        for i in range(len(fields)):
+            buckets.setdefault((i, _mask(new_key, i)), []).append(new_key)
+
+    # Still greedy: where several leftovers could pair, it takes the first rather
+    # than searching for a globally optimal assignment. Sorting keeps the result
+    # stable across runs, which matters more here than optimality.
     for old_key in sorted(old):
         while old[old_key] > 0:
             pairing = None
-            for new_key in sorted(new):
-                if new[new_key] <= 0:
-                    continue
-                index = _differs_in_one_field(old_key, new_key)
-                if index is not None:
-                    pairing = (new_key, index)
+            for i in range(len(fields)):
+                for new_key in buckets.get((i, _mask(old_key, i)), ()):
+                    if new[new_key] > 0:
+                        pairing = (new_key, i)
+                        break
+                if pairing:
                     break
             if pairing is None:
                 break
