@@ -108,7 +108,7 @@ python tests/test_core.py
 python tests/test_cli.py
 ```
 
-35 tests, standard library only. The CLI tests assert the exact numbers this README shows, so if the output above ever stops being true the suite fails.
+37 tests, standard library only. The CLI tests assert the exact numbers this README shows, so if the output above ever stops being true the suite fails.
 
 ## License
 
