@@ -122,7 +122,7 @@ class DiffResult:
         }
 
     def as_rows(self, counter: Counter) -> list[dict[str, Any]]:
-        """Expand a counter back into labelled dicts for reporting."""
+        """Expand a counter back into labeled dicts for reporting."""
         names = [f.name for f in self.fields]
         return [dict(zip(names, key)) for key, n in counter.items() for _ in range(n)]
 

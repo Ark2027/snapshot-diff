@@ -167,7 +167,7 @@ class ScaleTests(unittest.TestCase):
     """The pairing pass used to compare every leftover against every other one.
 
     That is quadratic, and on a run where nothing matched it took about 1.5
-    seconds for 1,600 rows a side. These pin the behaviour that replaced it.
+    seconds for 1,600 rows a side. These pin the behavior that replaced it.
     """
 
     FIELDS = (KeyField("name"), KeyField("date", "date"), KeyField("amount", "number"))
@@ -178,7 +178,7 @@ class ScaleTests(unittest.TestCase):
 
     def test_worst_case_completes_quickly(self) -> None:
         # Zero overlap, so every row on both sides is a leftover to be paired.
-        # Quadratic behaviour would take seconds here.
+        # Quadratic behavior would take seconds here.
         import time
 
         before = self._rows(2000, "alpha")
