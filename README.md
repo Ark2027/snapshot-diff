@@ -22,8 +22,21 @@ That's the whole idea. The rest is plumbing.
 
 ## Try it
 
+Needs Python 3.10 or newer. No dependencies at all for CSV; `openpyxl` only if you want Excel.
+
 ```bash
+git clone https://github.com/Ark2027/snapshot-diff
+cd snapshot-diff
+
+python -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+
 pip install -e .
+```
+
+Then diff the two bundled fixtures:
+
+```bash
 snapshot-diff fixtures/before.csv fixtures/after.csv \
   -f "Business Name" -f "Date:date" -f "Amount:number"
 ```
